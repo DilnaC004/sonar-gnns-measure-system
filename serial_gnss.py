@@ -1,23 +1,28 @@
 import serial
-import time
-import string
-import os
-import re
+import pynmea2
 import threading
-import krovak5 # no path!!!!!!
-import pynmea2 # no path!!!!!!
 
-class SerialSonarRead(threading.Thread):
+from krovak05 import Transformation
+
+
+class SerialGnssRead(threading.Thread):
     def __init__(self, com_port='/dev/ttyAMC0', baudrate=38400):
         super().__init__()
         self._stop_event = threading.Event()
         self.serial_object = serial.Serial(com_port, int(baudrate))
-        self.x = ""
-        self.y = ""
-        self.h = ""
-        self.timeStamp = ""
+        self.tranformation = Transformation()
 
-    def run(self):
+        # properties
+        self.lat = None
+        self.lon = None
+        self.alt = None
+        self.y_jtsk = None
+        self.x_jtsk = None
+        self.h_bpv = None
+        self.fix_status = None
+        self.timestamp = None
+
+    def run(self) -> None:
         '''
         The method that actually gets data from the port
         '''
@@ -25,27 +30,47 @@ class SerialSonarRead(threading.Thread):
             serial_data = self.serial_object.readline()
 
             try:
-
                 self.get_NMEA_parse(
                     serial_data.decode("ascii", errors="replace"))
-
 
             except Exception as error:
                 print('Some error in data: ', serial_data)
                 print(error)
-                
-    def get_NMEA_parse(self, serial_data):
+
+    def get_NMEA_parse(self, serial_data) -> None:
+        """Parse NMEA data from GNSS
+
+        Args:
+            serial_data (str): string line from serial
+        """
 
         gnss_nmea = pynmea2.parse(serial_data, check=True)
 
-        self.timeStamp = gnss_nmea.timestamp
+        # process only GGA data, YET
+        if gnss_nmea.sentence_type == "GGA":
 
-        self.x, self.y, self.h = krovak5.etrs_jtsk05(gnss_nmea.longitude, gnss_nmea.latitude, gnss_nmea.altitude)
-                
-    def stop(self):
+            self.timestamp = gnss_nmea.timestamp
+            self.fix_status = gnss_nmea.gps_qual
+            self.lat = gnss_nmea.latitude
+            self.lon = gnss_nmea.longitude
+
+            # elipsoidic height -- in GGA message is height about sea level
+            # H_el = H_sea + Geo_separation
+            self.hel = gnss_nmea.altitude + float(gnss_nmea.geo_sep)
+
+            self.y_jtsk, self.x_jtsk, self.h_bpv = self.tranformation.etrs_jtsk(
+                self.lat, self.lon, self.hel)
+
+    def stop(self) -> None:
+        """Stop thread
+        """
         self._stop_event.set()
         self.serial_object.close()
 
-    def stopped(self):
-        return self._stop_event.is_set()
+    def stopped(self) -> bool:
+        """Check if thread was stopped
 
+        Returns:
+            bool: 
+        """
+        return self._stop_event.is_set()
