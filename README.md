@@ -24,7 +24,7 @@ parameters :
 python3 main.py
 ```
 
-**Spec. cong run script :**
+**Spec. conf run script :**
 
 ```bash
 python3 main.py -pg /dev/ttyACM1 -d /testing_dir
