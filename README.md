@@ -29,3 +29,7 @@ python3 main.py
 ```bash
 python3 main.py -pg /dev/ttyACM1 -d /testing_dir
 ```
+
+**TODO:**
+* read inclination from MPU9250
+* calculate vertical depth
