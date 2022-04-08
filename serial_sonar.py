@@ -53,7 +53,8 @@ class SerialSonarRead(threading.Thread):
 
         # TODO: recalculate depth based on slope and water temperature
 
-        self.depth = self.depth_raw
+        #self.depth = self.depth_raw
+        pass
 
     def stop(self) -> None:
         self._stop_event.set()

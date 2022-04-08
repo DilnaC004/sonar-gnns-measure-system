@@ -39,19 +39,23 @@ if __name__ == "__main__":
 
     # write header description to files
     f_raw.write(
-        "timestamp,lat[deg],lon[deg],hel[m],fix_status,depth_raw[m],temperature[C°],inc_x[deg],inc_y[deg]\n")
+        "timestamp,lat[deg],lon[deg],hel[m],fix_status,depth_raw[m],temperature[C°],pitch[deg],roll[deg]\n")
     f_cor.write("timestamp,Y_jtsk[m],X_jtsk[m],H_bpv[m],fix_status\n")
 
     TIME_DELAY = 1 / int(args.frequency)
 
     try:
         while True:
+            try:
+                # TODO: add inclinations
+                f_raw.write("{},{:.14f},{:.14f},{:.4f},{},{:.4f},{:.2f},None,None\n".format(gnss.timestamp, gnss.lat,
+                            gnss.lon, gnss.alt, gnss.fix_status, sonar.depth, sonar.tempature))
+                print(sonar.tempature)
+                f_cor.write("{},{:.4f},{:.4f},{:.4f},{}\n".format(
+                    gnss.timestamp, gnss.y_jtsk, gnss.x_jtsk, gnss.h_bpv - sonar.depth, gnss.fix_status))
+            except Exception as err:
+                pass
 
-            # TODO: add inclinations
-            f_raw.write("{},{:.14f},{:.14f},{:.4f},{},{:.4f},{:.2f},None,None\n".format(gnss.timestamp, gnss.lat,
-                        gnss.lon, gnss.hel, gnss.fix_status, sonar.depth_raw, sonar.tempature))
-            f_cor.write("{},{:.4f},{:.4f},{:.4f},{}\n".format(
-                gnss.timestamp, gnss.y_jtsk, gnss.x_jtsk, gnss.h_bpv - sonar.depth, gnss.fix_status))
             time.sleep(TIME_DELAY)
 
     except (KeyboardInterrupt, SystemExit):

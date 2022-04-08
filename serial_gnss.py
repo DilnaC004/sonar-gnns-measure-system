@@ -56,6 +56,7 @@ class SerialGnssRead(threading.Thread):
 
             # elipsoidic height -- in GGA message is height about sea level
             # H_el = H_sea + Geo_separation
+            self.alt = gnss_nmea.altitude 
             self.hel = gnss_nmea.altitude + float(gnss_nmea.geo_sep)
 
             self.y_jtsk, self.x_jtsk, self.h_bpv = self.tranformation.etrs_jtsk(
