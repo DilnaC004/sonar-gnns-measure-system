@@ -1,9 +1,11 @@
 import os
 import time
 import argparse
+import math
 from datetime import datetime
 from serial_sonar import SerialSonarRead
 from serial_gnss import SerialGnssRead
+from i2c_imu import ImuRead
 
 if __name__ == "__main__":
 
@@ -25,10 +27,18 @@ if __name__ == "__main__":
     # inicializate meas. equipments
     sonar = SerialSonarRead(args.port_sonar, args.baud_sonar)
     gnss = SerialGnssRead(args.port_gnss, args.baud_gnss)
+    imu = ImuRead()
 
     # start read data in separate threads
     sonar.start()
     gnss.start()
+    imu.start()
+
+    # correct depth by IMU
+    # depthX = gnss.x_jtsk + sonar.depth * math.sin(imu.roll) * math.tan(imu.heading)
+    # depthY = gnss.y_jtsk + sonar.depth * math.sin(imu.pitch) * math.tan(imu.heading)
+    depthZ = gnss.h_bpv + sonar.depth * math.cos(imu.roll) * math.cos(imu.pitch)
+
 
     # create file in folder
     _file_name = os.path.join(args.directory, datetime.utcnow().strftime(
