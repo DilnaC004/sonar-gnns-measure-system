@@ -22,6 +22,8 @@ if __name__ == "__main__":
                     help='The name of the folder where the data will be stored (default "measure_folder")')
     ap.add_argument("-f", "--frequency", default=1,
                     help="Frequency of reading data (default 1 second)")
+    ap.add_argument("-lg", "--length", default=2,
+                    help="Length between GNSS and SONAR (default 1.5 m)")
     args = ap.parse_args()
 
     # inicializate meas. equipments
@@ -34,12 +36,6 @@ if __name__ == "__main__":
     gnss.start()
     imu.start()
 
-    # correct depth by IMU
-    # depthX = gnss.x_jtsk + sonar.depth * math.sin(imu.roll) * math.tan(imu.heading)
-    # depthY = gnss.y_jtsk + sonar.depth * math.sin(imu.pitch) * math.tan(imu.heading)
-    depthZ = gnss.h_bpv + sonar.depth * math.cos(imu.roll) * math.cos(imu.pitch)
-
-
     # create file in folder
     _file_name = os.path.join(args.directory, datetime.utcnow().strftime(
         "%d_%B_%Y_%H-%M-%S"))
@@ -49,7 +45,7 @@ if __name__ == "__main__":
 
     # write header description to files
     f_raw.write(
-        "timestamp,lat[deg],lon[deg],hel[m],fix_status,depth_raw[m],temperature[C°],pitch[deg],roll[deg]\n")
+        "timestamp,lat[deg],lon[deg],hel[m],fix_status,depth_raw[m],temperature[C°],pitch[rad],roll[rad]\n")
     f_cor.write("timestamp,Y_jtsk[m],X_jtsk[m],H_bpv[m],fix_status\n")
 
     TIME_DELAY = 1 / int(args.frequency)
@@ -57,12 +53,16 @@ if __name__ == "__main__":
     try:
         while True:
             try:
-                # TODO: add inclinations
-                f_raw.write("{},{:.14f},{:.14f},{:.4f},{},{:.4f},{:.2f},None,None\n".format(gnss.timestamp, gnss.lat,
-                            gnss.lon, gnss.alt, gnss.fix_status, sonar.depth, sonar.tempature))
+                # correct depth by IMU
+                # depthX = gnss.x_jtsk + sonar.depth * math.sin(imu.roll) * math.tan(imu.heading)
+                # depthY = gnss.y_jtsk + sonar.depth * math.sin(imu.pitch) * math.tan(imu.heading)
+                depthZ = gnss.h_bpv - args.length - sonar.depth * math.cos(imu.roll) * math.cos(imu.pitch)
+
+                f_raw.write("{},{:.14f},{:.14f},{:.4f},{},{:.4f},{:.2f},{:.14f},{:.14f}\n".format(gnss.timestamp, gnss.lat,
+                            gnss.lon, gnss.alt, gnss.fix_status, sonar.depth, sonar.tempature, imu.pitch, imu.roll))
                 print(sonar.tempature)
                 f_cor.write("{},{:.4f},{:.4f},{:.4f},{}\n".format(
-                    gnss.timestamp, gnss.y_jtsk, gnss.x_jtsk, gnss.h_bpv - sonar.depth, gnss.fix_status))
+                    gnss.timestamp, gnss.y_jtsk, gnss.x_jtsk, depthZ, gnss.fix_status))
             except Exception as err:
                 pass
 
