@@ -22,8 +22,8 @@ if __name__ == "__main__":
                     help='The name of the folder where the data will be stored (default "measure_folder")')
     ap.add_argument("-f", "--frequency", default=1,
                     help="Frequency of reading data (default 1 second)")
-    ap.add_argument("-lg", "--length", default=2,
-                    help="Length between GNSS and SONAR (default 1.5 m)")
+    ap.add_argument("-lg", "--length", default=0.056+0.12+2+0.12,
+                    help="Length between GNSS and SONAR (ARP-0.056 + hlava-0.12 + tycka-2.00 + sonar-0.12 m)")
     args = ap.parse_args()
 
     # inicializate meas. equipments
@@ -35,6 +35,13 @@ if __name__ == "__main__":
     sonar.start()
     gnss.start()
     imu.start()
+
+    # IMU bias calibration
+    bias_pitch = -1.486
+    bias_roll = -0.042
+
+    imu.pitch = imu.pitch + bias_pitch
+    imu.roll = imu.roll + bias_roll
 
     # create file in folder
     _file_name = os.path.join(args.directory, datetime.utcnow().strftime(
@@ -56,7 +63,8 @@ if __name__ == "__main__":
                 # correct depth by IMU
                 # depthX = gnss.x_jtsk + sonar.depth * math.sin(imu.roll) * math.tan(imu.heading)
                 # depthY = gnss.y_jtsk + sonar.depth * math.sin(imu.pitch) * math.tan(imu.heading)
-                depthZ = gnss.h_bpv - args.length - sonar.depth * math.cos(imu.roll) * math.cos(imu.pitch)
+                
+                depthZ = gnss.h_bpv - (args.length - sonar.depth) * math.cos(imu.roll) * math.cos(imu.pitch)
 
                 f_raw.write("{},{:.14f},{:.14f},{:.4f},{},{:.4f},{:.2f},{:.14f},{:.14f}\n".format(gnss.timestamp, gnss.lat,
                             gnss.lon, gnss.alt, gnss.fix_status, sonar.depth, sonar.tempature, imu.pitch, imu.roll))
