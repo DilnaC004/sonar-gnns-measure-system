@@ -1,5 +1,9 @@
 import serial
+import logging
 import threading
+
+
+log = logging.getLogger(__name__)
 
 
 class SerialSonarRead(threading.Thread):
@@ -24,9 +28,8 @@ class SerialSonarRead(threading.Thread):
                 self.get_NMEA_parse(
                     serial_data.decode("ascii", errors="replace"))
 
-            except Exception as error:
-                print('Some error in data: ', serial_data)
-                print(error)
+            except Exception:
+                log.exception(f"Some error in data: {serial_data}")
 
     def get_NMEA_parse(self, serial_data) -> None:
         """Parse NMEA data from sonar 
