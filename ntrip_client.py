@@ -58,7 +58,7 @@ class NtripClient(threading.Thread):
             time.sleep(2)
 
     def connect_server(self):
-        if self._is_virtual and self._gnss.last_gga == "":
+        if self._is_virtual and self._gnss.last_gga is None:
             logging.info("Waiting for valid GGA")
             return
 
