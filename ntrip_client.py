@@ -42,6 +42,7 @@ class NtripClient(threading.Thread):
         self._is_virtual = config["ntrip_is_virtual"]
         self._gnss = gnss
         self._serial_port = None if self._gnss is None else self._gnss.serial_object
+        self._last_gga_send = datetime.utcnow()
 
         log.debug('NTRIP imported')
 
@@ -77,6 +78,12 @@ class NtripClient(threading.Thread):
                     self._serial_port.write(received_data)
                 else:
                     log.info(received_data)
+
+                # resend GGA message after some time
+                if self._is_virtual and (datetime.utcnow() - self._last_gga_send).total_seconds() > 15:
+                    s.sendall(f"{self._gnss.last_gga}\r\n".encode("utf-8"))
+                    self._last_gga_send = datetime.utcnow()
+
 
     def get_access_string(self):
         auth = "{}:{}".format(
