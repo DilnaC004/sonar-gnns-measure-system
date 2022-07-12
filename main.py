@@ -1,9 +1,10 @@
 import os
 import time
-import requests
-import argparse
 import math
 import logging
+import requests
+import argparse
+import setproctitle
 
 from helper import get_size
 from i2c_imu import ImuRead
@@ -11,6 +12,8 @@ from datetime import datetime
 from ntrip_client import NtripClient
 from serial_gnss import SerialGnssRead
 from serial_sonar import SerialSonarRead
+
+setproctitle.setproctitle("SonarMeasure")
 
 actual_time = datetime.utcnow()
 log_formatter = '%(asctime)s %(name)s %(message)s'
