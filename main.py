@@ -48,8 +48,8 @@ if __name__ == "__main__":
                     help="IMU bias calibration pitch (default 0.0)")
     ap.add_argument("-br", "--bias_roll", default=0.0,
                     help="IMU bias calibration roll (default 0.0)")
-    ap.add_argument("-ul", "--server_url", default='localhost:5000',
-                    help="Display server address (default localhost:5000)")
+    ap.add_argument("-ul", "--server_url", default='http://127.0.0.1:5000/send_data',
+                    help="Display server address (default http://127.0.0.1:5000/send_data)")
     ap.add_argument("-nt", "--ntrip_config_path", default='',
                     help="NTRIP configuration path")
     args = ap.parse_args()
