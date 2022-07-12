@@ -1,8 +1,11 @@
 import serial
 import pynmea2
 import threading
+import logging
 
 from krovak05 import Transformation
+
+log = logging.getLogger(__name__)
 
 
 class SerialGnssRead(threading.Thread):
@@ -21,6 +24,7 @@ class SerialGnssRead(threading.Thread):
         self.h_bpv = None
         self.fix_status = None
         self.timestamp = None
+        self.last_gga = None
 
     def run(self) -> None:
         '''
@@ -33,9 +37,8 @@ class SerialGnssRead(threading.Thread):
                 self.get_NMEA_parse(
                     serial_data.decode("ascii", errors="replace"))
 
-            except Exception as error:
-                print('Some error in data: ', serial_data)
-                print(error)
+            except Exception:
+                log.exception(f"Some error in data: {serial_data}")
 
     def get_NMEA_parse(self, serial_data) -> None:
         """Parse NMEA data from GNSS
@@ -53,10 +56,11 @@ class SerialGnssRead(threading.Thread):
             self.fix_status = gnss_nmea.gps_qual
             self.lat = gnss_nmea.latitude
             self.lon = gnss_nmea.longitude
+            self.last_gga = serial_data
 
             # elipsoidic height -- in GGA message is height about sea level
             # H_el = H_sea + Geo_separation
-            self.alt = gnss_nmea.altitude 
+            self.alt = gnss_nmea.altitude
             self.hel = gnss_nmea.altitude + float(gnss_nmea.geo_sep)
 
             self.y_jtsk, self.x_jtsk, self.h_bpv = self.tranformation.etrs_jtsk(
