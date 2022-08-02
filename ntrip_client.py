@@ -17,8 +17,8 @@ DEFAULT_CONFIG = {
     "ntrip_server": "czeposr.cuzk.cz",
     "ntrip_port": 2101,
     "ntrip_mountpoint": "CPRG3-MSM",
-    "ntrip_user": "controlsys",
-    "ntrip_password": "cs2668",
+    "ntrip_user": "*****",
+    "ntrip_password": "****",
     "ntrip_is_virtual": False,
 }
 
